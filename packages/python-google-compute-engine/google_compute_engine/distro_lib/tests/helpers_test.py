@@ -170,3 +170,29 @@ class HelpersTest(unittest.TestCase):
     mock_check_call.assert_called_once_with(command_ntpdate, shell=True)
     expected_calls = [mock.call.warning(mock.ANY)]
     self.assertEqual(mock_logger.mock_calls, expected_calls)
+
+  @mock.patch('google_compute_engine.distro_lib.helpers.subprocess.check_call')
+  def testEnableRouteAdvertisements(self, mock_call):
+    command = ['sysctl', '-w']
+    mock_logger = mock.Mock()
+
+    interfaces = ['foo', 'bar', 'baz']
+    helpers.CallEnableRouteAdvertisements(mock_logger, interfaces)
+    mock_call.assert_has_calls([
+        mock.call(['sysctl', '-w',
+           'net.ipv6.conf.%s.accept_ra_rt_info_max_plen=128' % interface])
+        for interface in interfaces])
+
+  @mock.patch('google_compute_engine.distro_lib.helpers.subprocess.check_call')
+  def testCallWriteViaSysCtl(self, mock_call):
+    command = ['sysctl', '-w']
+    mock_logger = mock.Mock()
+
+    expected_log_calls = []
+    for name in ['foo', 'bar', 'baz']:
+      for value in ['foo', 'bar', 'baz']:
+        params = ['{name}={value}'.format(name=name, value=value)]
+        helpers.CallWriteViaSysCtl(mock_logger, name, value)
+        mock_call.assert_called_with(command + params)
+        expected_log_calls.append(mock.call.info(mock.ANY, name))
+    self.assertEqual(mock_logger.mock_calls, expected_log_calls)

@@ -96,3 +96,35 @@ def CallNtpdate(logger):
     logger.warning('Failed to sync system time with ntp server.')
   else:
     logger.info('Synced system time with ntp server.')
+
+
+def CallEnableRouteAdvertisements(logger, interfaces):
+  """Enable route advertisements.
+
+  Args:
+    interfaces: list of string, the output device names to enable.
+    logger: logger object, used to write to SysLog and serial port.
+    dhclient_script: string, the path to a dhclient script used by dhclient.
+  """
+  for interface in interfaces:
+    accept_ra = (
+      'net.ipv6.conf.{interface}.accept_ra_rt_info_max_plen'.format(
+        interface=interface))
+    CallWriteViaSysCtl(logger, accept_ra, 128)
+
+
+def CallWriteViaSysCtl(logger, name, value):
+  """Write a variable using sysctl,
+
+  Args:
+      name: name of the sysctl variable.
+      value: value of the sysctl variable.
+  """
+  logger.info('Configuring sysctl %s.', name)
+
+  sysctl_command = ['sysctl', '-w',
+                    '{name}={value}'.format(name=name, value=value)]
+  try:
+    subprocess.check_call(sysctl_command)
+  except subprocess.CalledProcessError:
+    logger.warning('Unable to configure sysctl %s.', name)

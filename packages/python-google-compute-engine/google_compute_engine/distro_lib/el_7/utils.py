@@ -38,6 +38,7 @@ class Utils(utils.Utils):
       logger: logger object, used to write to SysLog and serial port.
       dhclient_script: string, the path to a dhclient script used by dhclient.
     """
+    helpers.CallEnableRouteAdvertisements(logger, interfaces)
     helpers.CallDhclientIpv6(interfaces, logger)
 
   def EnableNetworkInterfaces(self, interfaces, logger, dhclient_script=None):
